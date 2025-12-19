@@ -63,3 +63,6 @@
 ```bash
   sudo ./manager.sh install-local dist/linux_agent
 ```
+
+## Releases
+  [0.0.1](./docs/releases/release-v-0.0.1.md)
