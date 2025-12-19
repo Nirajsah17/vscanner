@@ -18,6 +18,7 @@ lib64/
 parts/
 sdist/
 var/
+/cloud/cloud_data/
 wheels/
 share/python-wheels/
 *.egg-info/

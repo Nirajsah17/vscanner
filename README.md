@@ -58,7 +58,7 @@
   sudo ./manager.sh uninstall
 ```
 
->>> Note: If you have your compiled file in your current folder (e.g., named dist/linux_agent), you run:
+> Note: If you have your compiled file in your current folder (e.g., named dist/linux_agent), you run:
 
 ```bash
   sudo ./manager.sh install-local dist/linux_agent
