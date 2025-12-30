@@ -64,5 +64,16 @@
   sudo ./manager.sh install-local dist/linux_agent
 ```
 
+## Config management
+
+When user install the scanner as service. There is `config.json` is created in `"/etc/vscanner/config.json"`. If its not there in this path with following details.
+
+```bash
+  "server_url": "http://10.129.141.79:5000/api/upload_scan",
+  "api_key": "CHANGE_ME_IN_PRODUCTION",
+  "scan_interval": 14400,
+  "osquery_bin": "/usr/bin/osqueryi"
+```
+
 ## Releases
   [0.0.1](./docs/releases/release-v-0.0.1.md)
