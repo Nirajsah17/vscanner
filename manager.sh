@@ -3,7 +3,10 @@
 # Configuration Variables
 APP_NAME="vscanner"
 INSTALL_DIR="/opt/$APP_NAME"
+CONFIG_DIR="/etc/$APP_NAME"
+CONFIG_FILE="$CONFIG_DIR/config.json"
 SERVICE_FILE="/etc/systemd/system/$APP_NAME.service"
+
 # Using 'raw' URL for direct binary download
 BINARY_URL="https://github.com/Nirajsah17/vscanner/raw/develope/dist/linux_agent"
 
@@ -22,9 +25,81 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # ==========================================
+# HELPER: INSTALL DEPENDENCIES (OSQUERY)
+# ==========================================
+install_dependencies() {
+    echo -e "${YELLOW}Checking system dependencies...${NC}"
+
+    # 1. Check/Install Curl
+    if ! command -v curl &> /dev/null; then
+        echo "Installing curl..."
+        if [ -f /etc/debian_version ]; then
+            apt-get update && apt-get install -y curl
+        elif [ -f /etc/redhat-release ]; then
+            yum install -y curl
+        fi
+    fi
+
+    # 2. Check/Install Osquery
+    if command -v osqueryi &> /dev/null; then
+        echo -e "${GREEN}Osquery is already installed.${NC}"
+    else
+        echo -e "${YELLOW}Osquery not found. Installing...${NC}"
+        
+        if [ -f /etc/debian_version ]; then
+            # Debian/Ubuntu
+            export OSQUERY_KEY=1484120AC4E9F8A1A577AEEE97A80C63C9D8B80B
+            apt-key adv --keyserver keyserver.ubuntu.com --recv-keys $OSQUERY_KEY
+            add-apt-repository 'deb [arch=amd64] https://pkg.osquery.io/deb deb main' -y
+            apt-get update -y
+            apt-get install osquery -y
+        elif [ -f /etc/redhat-release ]; then
+            # RHEL/CentOS
+            curl -L https://pkg.osquery.io/rpm/GPG | tee /etc/pki/rpm-gpg/RPM-GPG-KEY-osquery
+            yum-config-manager --add-repo https://pkg.osquery.io/rpm/osquery-s3-rpm.repo
+            yum-config-manager --enable osquery-s3-rpm
+            yum install osquery -y
+        else
+            echo -e "${RED}Warning: Unsupported OS. Please install 'osquery' manually.${NC}"
+        fi
+    fi
+}
+
+# ==========================================
+# HELPER: CREATE CONFIGURATION
+# ==========================================
+create_config() {
+    # Create /etc/vscanner directory
+    if [[ ! -d "$CONFIG_DIR" ]]; then
+        echo "Creating configuration directory: $CONFIG_DIR"
+        mkdir -p "$CONFIG_DIR"
+    fi
+
+    # Create config.json only if it doesn't exist (don't overwrite user settings)
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        echo "Creating default configuration at $CONFIG_FILE..."
+        cat <<EOF > "$CONFIG_FILE"
+{
+    "server_url": "http://10.63.196.79:5000/api/upload_scan",
+    "api_key": "CHANGE_ME_IN_PRODUCTION",
+    "scan_interval": 14400,
+    "osquery_bin": "/usr/bin/osqueryi"
+}
+EOF
+        echo -e "${YELLOW}IMPORTANT: Please update 'api_key' in $CONFIG_FILE${NC}"
+    else
+        echo "Configuration file already exists. Skipping."
+    fi
+
+    # Create Log Directory
+    if [[ ! -d "/var/log" ]]; then
+        mkdir -p "/var/log"
+    fi
+}
+
+# ==========================================
 # HELPER: CONFIGURE SYSTEMD
 # ==========================================
-# This function handles the common setup steps (permissions, service file, starting)
 configure_service() {
     # 1. Set Permissions
     echo "Setting executable permissions..."
@@ -44,7 +119,11 @@ WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/$APP_NAME
 Restart=always
 RestartSec=5
+
+# Environment variables for Python
 Environment="PYTHONUNBUFFERED=1"
+
+# Standard logging (The app also logs to /var/log/vscanner/vscanner.log)
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=$APP_NAME
@@ -62,7 +141,7 @@ EOF
     # 4. Verification
     if systemctl is-active --quiet "$APP_NAME"; then
         echo -e "${GREEN}Success! $APP_NAME is installed and running.${NC}"
-        echo "View logs with: journalctl -u $APP_NAME -f"
+        echo "View logs with: sudo tail -f /var/log/vscanner/vscanner.log"
     else
         echo -e "${RED}Warning: Service installed but failed to start.${NC}"
         echo "Check status: systemctl status $APP_NAME"
@@ -75,12 +154,8 @@ EOF
 install_app() {
     echo -e "${YELLOW}Starting installation for $APP_NAME (from GitHub)...${NC}"
 
-    # 1. Check for Curl
-    if ! command -v curl &> /dev/null; then
-        echo -e "${RED}Error: 'curl' is not installed.${NC}"
-        echo "Please install it (e.g., sudo apt install curl) and try again."
-        exit 1
-    fi
+    # 1. Install Dependencies (Osquery/Curl)
+    install_dependencies
 
     # 2. Stop service if running
     if systemctl is-active --quiet "$APP_NAME"; then
@@ -103,7 +178,10 @@ install_app() {
         exit 1
     fi
 
-    # 5. Configure and Start
+    # 5. Create Configs
+    create_config
+
+    # 6. Configure and Start
     configure_service
 }
 
@@ -127,23 +205,29 @@ install_local_app() {
         exit 1
     fi
 
-    # 2. Stop service if running
+    # 2. Install Dependencies
+    install_dependencies
+
+    # 3. Stop service if running
     if systemctl is-active --quiet "$APP_NAME"; then
         echo "Stopping existing service..."
         systemctl stop "$APP_NAME"
     fi
 
-    # 3. Create Directory
+    # 4. Create Directory
     if [[ ! -d "$INSTALL_DIR" ]]; then
         echo "Creating directory $INSTALL_DIR..."
         mkdir -p "$INSTALL_DIR"
     fi
 
-    # 4. Copy Binary
+    # 5. Copy Binary
     echo "Copying binary from $LOCAL_FILE..."
     cp "$LOCAL_FILE" "$INSTALL_DIR/$APP_NAME"
 
-    # 5. Configure and Start
+    # 6. Create Configs
+    create_config
+
+    # 7. Configure and Start
     configure_service
 }
 
@@ -208,6 +292,10 @@ uninstall_app() {
         echo "Removing installation files..."
         rm -rf "$INSTALL_DIR"
     fi
+    
+    # Optional: Remove Configs
+    # echo "Removing configs..."
+    # rm -rf "$CONFIG_DIR"
 
     echo -e "${GREEN}Success! $APP_NAME has been uninstalled.${NC}"
 }
@@ -234,7 +322,6 @@ case "$1" in
         install_app
         ;;
     install-local)
-        # Pass the second argument (the file path) to the function
         install_local_app "$2"
         ;;
     update)
