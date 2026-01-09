@@ -13,7 +13,7 @@ NC='\033[0m'
 
 # Configuration
 # Point this to your new entry file
-ENTRY_POINT="./app/v2/main.py"
+ENTRY_POINT="./app/main.py"
 OUTPUT_NAME="vscanner_agent"
 DIST_DIR="./dist"
 

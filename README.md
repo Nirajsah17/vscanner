@@ -61,7 +61,7 @@
 > Note: If you have your compiled file in your current folder (e.g., named dist/linux_agent), you run:
 
 ```bash
-  sudo ./manager.sh install-local dist/linux_agent
+  sudo ./manager.sh install-local dist/vscanner_agent_linux
 ```
 
 ## Config management

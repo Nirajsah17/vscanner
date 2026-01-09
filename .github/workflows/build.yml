@@ -42,8 +42,8 @@ jobs:
         pyinstaller --onefile \
           --clean \
           --name vscanner_linux \
-          --paths "./app/v2" \
-          app/v2/main.py
+          --paths "./app" \
+          app/main.py
 
     # 5. Build Windows Executable
     - name: Build Windows Agent
@@ -53,8 +53,8 @@ jobs:
           --clean `
           --uac-admin `
           --name vscanner_windows `
-          --paths "./app/v2" `
-          app/v2/main.py
+          --paths "./app" `
+          app/main.py
 
     # 6. Upload Artifacts (Downloadable zips)
     - name: Upload Build Artifacts

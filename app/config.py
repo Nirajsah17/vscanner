@@ -26,7 +26,7 @@ os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 os.makedirs(BASE_DIR, exist_ok=True)
 
 DEFAULT_CONFIG = {
-    "server_url": "http://10.63.196.79:5000/api/upload_scan",
+    "server_url": "http://localhost:5000/api/upload_scan",
     "api_key": "CHANGE_ME",
     "scan_interval": 14400,
     "osquery_bin": DEFAULT_BIN,
