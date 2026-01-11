@@ -72,7 +72,7 @@ create_config() {
     # Create /etc/vscanner directory
     if [[ ! -d "$CONFIG_DIR" ]]; then
         echo "Creating configuration directory: $CONFIG_DIR"
-        mkdir -p "$CONFIG_DIR"
+        mkdir -p "$CONFIG_DIR/certs"
     fi
 
     # Create config.json only if it doesn't exist (don't overwrite user settings)
@@ -80,7 +80,8 @@ create_config() {
         echo "Creating default configuration at $CONFIG_FILE..."
         cat <<EOF > "$CONFIG_FILE"
 {
-    "server_url": "http://10.63.196.79:5000/api/upload_scan",
+    "server_url": "https://localhost:8443/api",
+    "enroll_secret": "super-secret",
     "api_key": "CHANGE_ME_IN_PRODUCTION",
     "scan_interval": 14400,
     "osquery_bin": "/usr/bin/osqueryi"

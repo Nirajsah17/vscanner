@@ -26,7 +26,9 @@ os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 os.makedirs(BASE_DIR, exist_ok=True)
 
 DEFAULT_CONFIG = {
-    "server_url": "http://localhost:5000/api/upload_scan",
+    "server_url": "http://localhost:8443/api",
+    "enroll_secret": "super-secret",
+    "cert_dir": "/opt/vscanner",
     "api_key": "CHANGE_ME",
     "scan_interval": 14400,
     "osquery_bin": DEFAULT_BIN,

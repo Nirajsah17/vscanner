@@ -69,7 +69,7 @@
 When user install the scanner as service. There is `config.json` is created in `"/etc/vscanner/config.json"`. If its not there in this path with following details.
 
 ```bash
-  "server_url": "http://10.129.141.79:5000/api/upload_scan",
+  "server_url": "http://localhost:8443/api",
   "api_key": "CHANGE_ME_IN_PRODUCTION",
   "scan_interval": 14400,
   "osquery_bin": "/usr/bin/osqueryi"

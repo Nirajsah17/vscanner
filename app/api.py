@@ -2,26 +2,28 @@ import requests
 import logging
 from config import conf
 
+CERT_DIR = conf.get("cert_dir")
+
+CLIENT_CERT = (
+    f"{CERT_DIR}/agent.crt",
+    f"{CERT_DIR}/agent.key"
+)
+
+CA_CERT = f"{CERT_DIR}/ca.crt"
+
+
 def upload_payload(payload):
-    url = conf.get("server_url")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {conf.get('api_key')}"
-    }
-    
     try:
-        logging.info(f"Uploading scan data ({len(str(payload))} bytes) to {url}...")
-        resp = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if resp.status_code == 200:
-            logging.info("✅ Upload Success")
-            return True
-        elif resp.status_code == 401:
-            logging.critical("❌ Auth Failed: Check API Key")
-        else:
-            logging.warning(f"⚠️ Upload Failed: Server returned {resp.status_code}")
-            
+        r = requests.post(
+            f"{conf.get('server_url')}/upload_scan",
+            json=payload,
+            cert=CLIENT_CERT,
+            verify=CA_CERT,
+            timeout=15
+        )
+        r.raise_for_status()
+        logging.info("Payload uploaded successfully")
+
     except Exception as e:
-        logging.error(f"❌ Connection Error: {e}")
-        
-    return False
+        logging.error(f"Upload failed: {e}")
+        raise

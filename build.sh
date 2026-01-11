@@ -49,7 +49,7 @@ build_linux() {
     pyinstaller --onefile \
         --clean \
         --name "${OUTPUT_NAME}_linux" \
-        --paths="./app/v2" \
+        --paths="./app" \
         "$ENTRY_POINT"
 
     if [ $? -eq 0 ]; then
